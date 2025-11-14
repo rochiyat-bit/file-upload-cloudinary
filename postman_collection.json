@@ -1,0 +1,175 @@
+{
+  "info": {
+    "name": "File Upload Cloudinary API",
+    "description": "Collection untuk testing File Upload API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{BASE_URL}}/health",
+          "host": ["{{BASE_URL}}"],
+          "path": ["health"]
+        }
+      }
+    },
+    {
+      "name": "Upload Single File",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": []
+            },
+            {
+              "key": "uploadedBy",
+              "value": "user123",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/api/uploads/single",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "uploads", "single"]
+        }
+      }
+    },
+    {
+      "name": "Upload Multiple Files",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "files",
+              "type": "file",
+              "src": []
+            },
+            {
+              "key": "files",
+              "type": "file",
+              "src": []
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/api/uploads/multiple",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "uploads", "multiple"]
+        }
+      }
+    },
+    {
+      "name": "Get All Uploads",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{BASE_URL}}/api/uploads?page=1&limit=10&sortOrder=DESC",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "uploads"],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "limit",
+              "value": "10"
+            },
+            {
+              "key": "sortOrder",
+              "value": "DESC"
+            },
+            {
+              "key": "resourceType",
+              "value": "image",
+              "disabled": true
+            },
+            {
+              "key": "search",
+              "value": "",
+              "disabled": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Upload by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{BASE_URL}}/api/uploads/:id",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "uploads", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Delete Upload",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"deleteFromCloudinary\": true\n}"
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/api/uploads/:id",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "uploads", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Upload Stats",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{BASE_URL}}/api/uploads/stats",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "uploads", "stats"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:5000",
+      "type": "string"
+    }
+  ]
+}
