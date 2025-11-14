@@ -8,6 +8,9 @@ const rateLimit = require('express-rate-limit');
 const { sequelize } = require('./models');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 const uploadRoutes = require('./routes/uploadRoutes');
+const authRoutes = require('./routes/authRoutes');
+const userRoutes = require('./routes/userRoutes');
+const cloudinaryConfigRoutes = require('./routes/cloudinaryConfigRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -68,22 +71,48 @@ app.get('/health', (req, res) => {
 });
 
 // API routes
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/cloudinary-config', cloudinaryConfigRoutes);
 app.use('/api/uploads', uploadRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
   res.status(200).json({
     success: true,
-    message: 'File Upload API with Cloudinary',
-    version: '1.0.0',
+    message: 'File Upload API with Cloudinary - User Management & Role-based System',
+    version: '2.0.0',
     endpoints: {
       health: '/health',
+      auth: {
+        register: 'POST /api/auth/register',
+        login: 'POST /api/auth/login',
+        profile: 'GET /api/auth/profile',
+        updateProfile: 'PUT /api/auth/profile',
+        changePassword: 'PUT /api/auth/change-password',
+        logout: 'POST /api/auth/logout'
+      },
+      users: {
+        list: 'GET /api/users (admin/moderator)',
+        get: 'GET /api/users/:id (admin/moderator)',
+        create: 'POST /api/users (admin)',
+        update: 'PUT /api/users/:id (admin/moderator)',
+        delete: 'DELETE /api/users/:id (admin)',
+        stats: 'GET /api/users/stats (admin)'
+      },
+      cloudinaryConfig: {
+        get: 'GET /api/cloudinary-config',
+        save: 'POST/PUT /api/cloudinary-config',
+        test: 'POST /api/cloudinary-config/test',
+        delete: 'DELETE /api/cloudinary-config',
+        toggle: 'PATCH /api/cloudinary-config/toggle'
+      },
       uploads: {
-        single: 'POST /api/uploads/single',
-        multiple: 'POST /api/uploads/multiple',
+        single: 'POST /api/uploads/single (authenticated)',
+        multiple: 'POST /api/uploads/multiple (authenticated)',
         list: 'GET /api/uploads',
         get: 'GET /api/uploads/:id',
-        delete: 'DELETE /api/uploads/:id',
+        delete: 'DELETE /api/uploads/:id (authenticated)',
         stats: 'GET /api/uploads/stats'
       }
     }

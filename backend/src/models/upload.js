@@ -116,8 +116,11 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   Upload.associate = function(models) {
-    // Add associations here if needed
-    // Example: Upload.belongsTo(models.User, { foreignKey: 'uploadedBy' });
+    // Upload belongs to User
+    Upload.belongsTo(models.User, {
+      foreignKey: 'uploadedBy',
+      as: 'uploader'
+    });
   };
 
   return Upload;

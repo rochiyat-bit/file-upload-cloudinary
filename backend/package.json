@@ -31,7 +31,10 @@
     "joi": "^17.11.0",
     "morgan": "^1.10.0",
     "compression": "^1.7.4",
-    "streamifier": "^0.1.1"
+    "streamifier": "^0.1.1",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "crypto-js": "^4.2.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.2",

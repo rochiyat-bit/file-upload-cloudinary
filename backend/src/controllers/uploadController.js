@@ -1,10 +1,33 @@
-const { Upload } = require('../models');
+const { Upload, UserCloudinaryConfig } = require('../models');
 const {
   uploadToCloudinary,
   deleteFromCloudinary,
   uploadMultipleToCloudinary
 } = require('../utils/cloudinaryHelper');
 const { Op } = require('sequelize');
+
+/**
+ * Get user's cloudinary config or use default
+ */
+const getUserCloudinaryConfig = async (userId) => {
+  if (!userId) return null;
+
+  const config = await UserCloudinaryConfig.findOne({
+    where: {
+      userId,
+      isActive: true
+    }
+  });
+
+  if (!config) return null;
+
+  return {
+    cloudName: config.cloudName,
+    apiKey: config.apiKey,
+    apiSecret: config.apiSecret,
+    folder: config.folder
+  };
+};
 
 /**
  * Upload single file
@@ -18,11 +41,26 @@ const uploadSingle = async (req, res, next) => {
       });
     }
 
+    // Get user's cloudinary config if authenticated
+    const userId = req.user ? req.user.id : null;
+    const userConfig = await getUserCloudinaryConfig(userId);
+
+    // If user doesn't have config and is authenticated, return error
+    if (userId && !userConfig) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please configure your Cloudinary settings first'
+      });
+    }
+
     // Upload to Cloudinary
-    const cloudinaryResult = await uploadToCloudinary(req.file.buffer, {
-      folder: process.env.CLOUDINARY_FOLDER || 'uploads',
-      resource_type: 'auto'
-    });
+    const cloudinaryResult = await uploadToCloudinary(
+      req.file.buffer,
+      {
+        resource_type: 'auto'
+      },
+      userConfig
+    );
 
     // Save to database
     const upload = await Upload.create({
@@ -38,7 +76,7 @@ const uploadSingle = async (req, res, next) => {
       format: cloudinaryResult.format,
       resourceType: cloudinaryResult.resource_type,
       folder: cloudinaryResult.folder,
-      uploadedBy: req.body.uploadedBy || null,
+      uploadedBy: userId,
       tags: req.body.tags ? JSON.parse(req.body.tags) : [],
       metadata: {
         bytes: cloudinaryResult.bytes,
@@ -69,12 +107,27 @@ const uploadMultiple = async (req, res, next) => {
       });
     }
 
+    // Get user's cloudinary config if authenticated
+    const userId = req.user ? req.user.id : null;
+    const userConfig = await getUserCloudinaryConfig(userId);
+
+    // If user doesn't have config and is authenticated, return error
+    if (userId && !userConfig) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please configure your Cloudinary settings first'
+      });
+    }
+
     // Upload all files to Cloudinary
     const uploadPromises = req.files.map(async (file) => {
-      const cloudinaryResult = await uploadToCloudinary(file.buffer, {
-        folder: process.env.CLOUDINARY_FOLDER || 'uploads',
-        resource_type: 'auto'
-      });
+      const cloudinaryResult = await uploadToCloudinary(
+        file.buffer,
+        {
+          resource_type: 'auto'
+        },
+        userConfig
+      );
 
       return {
         filename: file.originalname,
@@ -89,7 +142,7 @@ const uploadMultiple = async (req, res, next) => {
         format: cloudinaryResult.format,
         resourceType: cloudinaryResult.resource_type,
         folder: cloudinaryResult.folder,
-        uploadedBy: req.body.uploadedBy || null,
+        uploadedBy: userId,
         tags: req.body.tags ? JSON.parse(req.body.tags) : [],
         metadata: {
           bytes: cloudinaryResult.bytes,
@@ -134,6 +187,11 @@ const getUploads = async (req, res, next) => {
     const whereClause = {
       isActive: true
     };
+
+    // If user is authenticated, only show their uploads
+    if (req.user && req.user.role !== 'admin') {
+      whereClause.uploadedBy = req.user.id;
+    }
 
     if (resourceType) {
       whereClause.resourceType = resourceType;
@@ -185,11 +243,18 @@ const getUploadById = async (req, res, next) => {
   try {
     const { id } = req.params;
 
+    const whereClause = {
+      id,
+      isActive: true
+    };
+
+    // Non-admin users can only view their own uploads
+    if (req.user && req.user.role !== 'admin') {
+      whereClause.uploadedBy = req.user.id;
+    }
+
     const upload = await Upload.findOne({
-      where: {
-        id,
-        isActive: true
-      }
+      where: whereClause
     });
 
     if (!upload) {
@@ -218,17 +283,24 @@ const deleteUpload = async (req, res, next) => {
     const { id } = req.params;
     const { deleteFromCloudinary: shouldDeleteFromCloudinary = true } = req.body;
 
+    const whereClause = {
+      id,
+      isActive: true
+    };
+
+    // Non-admin users can only delete their own uploads
+    if (req.user && req.user.role !== 'admin') {
+      whereClause.uploadedBy = req.user.id;
+    }
+
     const upload = await Upload.findOne({
-      where: {
-        id,
-        isActive: true
-      }
+      where: whereClause
     });
 
     if (!upload) {
       return res.status(404).json({
         success: false,
-        message: 'Upload not found'
+        message: 'Upload not found or you do not have permission to delete it'
       });
     }
 
@@ -263,12 +335,19 @@ const deleteUpload = async (req, res, next) => {
  */
 const getUploadStats = async (req, res, next) => {
   try {
+    const whereClause = { isActive: true };
+
+    // If user is authenticated and not admin, only show their stats
+    if (req.user && req.user.role !== 'admin') {
+      whereClause.uploadedBy = req.user.id;
+    }
+
     const totalUploads = await Upload.count({
-      where: { isActive: true }
+      where: whereClause
     });
 
     const totalSize = await Upload.sum('size', {
-      where: { isActive: true }
+      where: whereClause
     });
 
     const uploadsByType = await Upload.findAll({
@@ -277,7 +356,7 @@ const getUploadStats = async (req, res, next) => {
         [Upload.sequelize.fn('COUNT', Upload.sequelize.col('id')), 'count'],
         [Upload.sequelize.fn('SUM', Upload.sequelize.col('size')), 'totalSize']
       ],
-      where: { isActive: true },
+      where: whereClause,
       group: ['resourceType']
     });
 
@@ -287,7 +366,7 @@ const getUploadStats = async (req, res, next) => {
       data: {
         totalUploads,
         totalSize,
-        totalSizeMB: (totalSize / (1024 * 1024)).toFixed(2),
+        totalSizeMB: totalSize ? (totalSize / (1024 * 1024)).toFixed(2) : '0',
         uploadsByType
       }
     });
