@@ -16,7 +16,32 @@ body {
 
 .app {
   min-height: 100vh;
+}
+
+.app > *:not(nav) {
   padding: 2rem;
+}
+
+.unauthorized {
+  max-width: 600px;
+  margin: 4rem auto;
+  padding: 3rem 2rem;
+  background: white;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.unauthorized h2 {
+  color: #ff4757;
+  margin-bottom: 1rem;
+  font-size: 2rem;
+}
+
+.unauthorized p {
+  color: #666;
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
 }
 
 .container {

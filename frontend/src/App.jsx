@@ -1,47 +1,72 @@
-import { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import FileUpload from './components/FileUpload';
-import FileGallery from './components/FileGallery';
-import Stats from './components/Stats';
+import { AuthProvider } from './contexts/AuthContext';
+import Navigation from './components/Navigation';
+import ProtectedRoute from './components/ProtectedRoute';
+import Home from './pages/Home';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Settings from './pages/Settings';
+import UserManagement from './pages/UserManagement';
 import './styles/App.css';
 
 function App() {
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-
-  const handleUploadSuccess = () => {
-    // Trigger refresh of gallery and stats
-    setRefreshTrigger((prev) => prev + 1);
-  };
-
   return (
-    <div className="app">
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="light"
-      />
+    <Router>
+      <AuthProvider>
+        <div className="app">
+          <ToastContainer
+            position="top-right"
+            autoClose={3000}
+            hideProgressBar={false}
+            newestOnTop
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+            theme="light"
+          />
 
-      <div className="container">
-        <header className="header">
-          <h1>File Upload Manager</h1>
-          <p>Upload and manage your files with Cloudinary</p>
-        </header>
+          <Navigation />
 
-        <Stats refreshTrigger={refreshTrigger} />
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
 
-        <FileUpload onUploadSuccess={handleUploadSuccess} />
+            {/* Protected Routes */}
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <Home />
+                </ProtectedRoute>
+              }
+            />
 
-        <FileGallery refreshTrigger={refreshTrigger} />
-      </div>
-    </div>
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <Settings />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/users"
+              element={
+                <ProtectedRoute requiredRoles={['admin', 'moderator']}>
+                  <UserManagement />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </div>
+      </AuthProvider>
+    </Router>
   );
 }
 
