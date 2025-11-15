@@ -8,7 +8,9 @@
     "dev": "nodemon src/index.js",
     "db:migrate": "sequelize-cli db:migrate",
     "db:migrate:undo": "sequelize-cli db:migrate:undo",
-    "db:seed": "sequelize-cli db:seed:all"
+    "db:seed": "sequelize-cli db:seed:all",
+    "deploy:railway": "railway up",
+    "deploy:render": "render deploy"
   },
   "keywords": [
     "cloudinary",
